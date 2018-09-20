@@ -1,0 +1,3 @@
+[submodule "rapidjson-wrapper/lib/rapidjson"]
+	path = rapidjson-wrapper/lib/rapidjson
+	url = https://github.com/miloyip/rapidjson.git
