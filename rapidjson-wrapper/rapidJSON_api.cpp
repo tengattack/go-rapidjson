@@ -20,6 +20,9 @@ using namespace rapidjson;
 typedef struct tm_json_r_handler {
   int i;
   uint8_t *ctx;
+  tm_json_r_handler(int i_, uint8_t *ctx_)
+    : i(i_)
+    , ctx(ctx_) {};
   bool Default(void);
   bool Null(void);
   bool Bool(bool);
@@ -41,7 +44,7 @@ typedef struct tm_json_r_handler {
 extern "C" int tm_json_parse_str(char* json_s, void *buf) {
 
 	// allocate memory for the struct
-	tm_json_r_handler_t rh{0, (uint8_t*)buf};
+	tm_json_r_handler_t rh(0, (uint8_t*)buf);
 
 	// create an input stream from the stringified JSON input
 	StringStream is(json_s);
@@ -63,7 +66,7 @@ extern "C" int tm_json_parse_str(char* json_s, void *buf) {
 extern "C" int tm_json_parse(void* json_s, size_t len, void *buf) {
 
 	// allocate memory for the struct
-	tm_json_r_handler_t rh{0, (uint8_t*)buf};
+	tm_json_r_handler_t rh(0, (uint8_t*)buf);
 
 	// create an input stream from the stringified JSON input
 	MemoryStream is((char *)json_s, len);
