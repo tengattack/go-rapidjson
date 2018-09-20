@@ -32,14 +32,14 @@ var bufs = bufPool{pool: &sync.Pool{
 	},
 }}
 
-func (p *bufPool) Get(len int) []byte {
+func (p *bufPool) Get(len int) ([]byte, bool) {
 	// we assume the worst case: [0,0,0,0,0,0,0,0,0]
 	// buffer memory ratio: (2+5n)/(1+2n) > 2.5
 	// so, 4096 / 2.5 = 1638.4
 	if len > 1638 {
-		return make([]byte, len*3)
+		return make([]byte, len*3), false
 	}
-	return p.pool.Get().([]byte)
+	return p.pool.Get().([]byte), true
 }
 
 func (p *bufPool) Put(b []byte) {
@@ -48,8 +48,10 @@ func (p *bufPool) Put(b []byte) {
 
 // UnmarshalString unmarshals string to JSON value
 func UnmarshalString(data string, v interface{}) error {
-	buf := bufs.Get(len(data))
-	defer bufs.Put(buf)
+	buf, ok := bufs.Get(len(data))
+	if ok {
+		defer bufs.Put(buf)
+	}
 	s := C.CString(data)
 	ret := int(C.tm_json_parse_str(s, unsafe.Pointer(&buf[0])))
 	C.free(unsafe.Pointer(s))
@@ -62,8 +64,10 @@ func UnmarshalString(data string, v interface{}) error {
 
 // Unmarshal unmarshals data to JSON value
 func Unmarshal(data []byte, v interface{}) error {
-	buf := bufs.Get(len(data))
-	defer bufs.Put(buf)
+	buf, ok := bufs.Get(len(data))
+	if ok {
+		defer bufs.Put(buf)
+	}
 	ret := int(C.tm_json_parse(unsafe.Pointer(&data[0]), C.size_t((len(data))), unsafe.Pointer(&buf[0])))
 
 	if ret == 0 {
