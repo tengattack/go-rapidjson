@@ -14,6 +14,7 @@ import (
 
 type valNode struct {
 	typ int
+	key string
 	val interface{}
 }
 
@@ -133,6 +134,7 @@ func convertValue(buf []byte, ret int, v interface{}) error {
 			// {
 			nesting = append(nesting, valNode{
 				typ: 1, // object
+				key: key,
 				val: &map[string]interface{}{},
 			})
 			depth++
@@ -145,20 +147,21 @@ func convertValue(buf []byte, ret int, v interface{}) error {
 			continue
 		case 11:
 			// }
-			pv = (*(nesting[depth].val.(*map[string]interface{})))
+			pv, key = (*(nesting[depth].val.(*map[string]interface{}))), nesting[depth].key
 			nesting = nesting[:depth]
 			depth--
 		case 12:
 			// [
 			nesting = append(nesting, valNode{
 				typ: 2, // array
+				key: key,
 				val: &[]interface{}{},
 			})
 			depth++
 			continue
 		case 13:
 			// ]
-			pv = (*(nesting[depth].val.(*[]interface{})))
+			pv, key = (*(nesting[depth].val.(*[]interface{}))), nesting[depth].key
 			nesting = nesting[:depth]
 			depth--
 		}

@@ -29,6 +29,7 @@ var unmarshalTests = []unmarshalTest{
 	// object
 	{"{}", map[string]interface{}{}},
 	{"{\"a\":123}", map[string]interface{}{"a": uint(123)}},
+	{"{\"a\":{\"b\":123}}", map[string]interface{}{"a": map[string]interface{}{"b": uint(123)}}},
 	// array
 	{"[]", []interface{}{}},
 	{"[\"a\",123]", []interface{}{"a", uint(123)}},

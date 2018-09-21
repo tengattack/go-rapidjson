@@ -8,16 +8,19 @@ import (
 )
 
 func main() {
+	s := `{"@timestamp":"2018-09-21T02:34:04.320Z","prospector":{"type":"log"}}`
 	var v1 map[string]interface{}
 	var d []byte
-	err := rapidjson.UnmarshalString("{\"a\":-1,\"b\":[2]}", &v1)
+	err := rapidjson.UnmarshalString(s, &v1)
 	if err != nil {
 		panic(err)
 	}
 	d, _ = json.Marshal(v1)
 	fmt.Printf("val: %#v %s\n", v1, d)
+
+	s = "[-1,2,\"a\",{}]"
 	var v2 []interface{}
-	err = rapidjson.UnmarshalString("[-1,2,\"a\",{}]", &v2)
+	err = rapidjson.UnmarshalString(s, &v2)
 	if err != nil {
 		panic(err)
 	}
