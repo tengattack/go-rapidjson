@@ -8,18 +8,19 @@ import (
 )
 
 func main() {
-	var v interface{}
+	var v1 map[string]interface{}
 	var d []byte
-	err := rapidjson.UnmarshalString("{\"a\":-1,\"b\":[2]}", &v)
+	err := rapidjson.UnmarshalString("{\"a\":-1,\"b\":[2]}", &v1)
 	if err != nil {
 		panic(err)
 	}
-	d, _ = json.Marshal(v)
-	fmt.Printf("val: %#v %s\n", v, d)
-	err = rapidjson.UnmarshalString("[-1,2,\"a\",{}]", &v)
+	d, _ = json.Marshal(v1)
+	fmt.Printf("val: %#v %s\n", v1, d)
+	var v2 []interface{}
+	err = rapidjson.UnmarshalString("[-1,2,\"a\",{}]", &v2)
 	if err != nil {
 		panic(err)
 	}
-	d, _ = json.Marshal(v)
-	fmt.Printf("val: %#v %s\n", v, d)
+	d, _ = json.Marshal(v2)
+	fmt.Printf("val: %#v %s\n", v2, d)
 }

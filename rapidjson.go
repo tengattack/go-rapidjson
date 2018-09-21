@@ -170,8 +170,19 @@ func convertValue(buf []byte, ret int, v interface{}) error {
 			// array
 			(*(nesting[depth].val.(*[]interface{}))) = append((*(nesting[depth].val.(*[]interface{}))), pv)
 		} else {
-			// TODO: check type
-			(*(nesting[depth].val.(*interface{}))) = pv
+			// here must be root (depth=0)
+			// check type
+			switch v.(type) {
+			case *interface{}:
+				(*(v.(*interface{}))) = pv
+			case *map[string]interface{}:
+				(*(v.(*map[string]interface{}))), _ = pv.(map[string]interface{})
+			case *[]interface{}:
+				(*(v.(*[]interface{}))), _ = pv.([]interface{})
+			default:
+				// TODO: add type
+			}
+			return nil
 		}
 	}
 	return nil

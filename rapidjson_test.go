@@ -160,7 +160,7 @@ var largeJsonString = `[{
 
 func BenchmarkRapidJSON_Large_Unmarshal(b *testing.B) {
 	b.SetBytes(int64(len(largeJsonString)))
-	var v interface{}
+	var v []interface{}
 	for i := 0; i < b.N; i++ {
 		Unmarshal([]byte(largeJsonString), &v)
 	}
@@ -168,7 +168,7 @@ func BenchmarkRapidJSON_Large_Unmarshal(b *testing.B) {
 
 func BenchmarkJSONIter_Large_Unmarshal(b *testing.B) {
 	b.SetBytes(int64(len(largeJsonString)))
-	var v interface{}
+	var v []interface{}
 	for i := 0; i < b.N; i++ {
 		jsoniter.Unmarshal([]byte(largeJsonString), &v)
 	}
@@ -176,7 +176,7 @@ func BenchmarkJSONIter_Large_Unmarshal(b *testing.B) {
 
 func BenchmarkStdJSON_Large_Unmarshal(b *testing.B) {
 	b.SetBytes(int64(len(largeJsonString)))
-	var v interface{}
+	var v []interface{}
 	for i := 0; i < b.N; i++ {
 		json.Unmarshal([]byte(largeJsonString), &v)
 	}
@@ -196,7 +196,7 @@ var smallJsonString = `{
 
 func BenchmarkRapidJSON_Small_Unmarshal(b *testing.B) {
 	b.SetBytes(int64(len(smallJsonString)))
-	var v interface{}
+	var v map[string]interface{}
 	for i := 0; i < b.N; i++ {
 		Unmarshal([]byte(smallJsonString), &v)
 	}
@@ -204,7 +204,7 @@ func BenchmarkRapidJSON_Small_Unmarshal(b *testing.B) {
 
 func BenchmarkJSONIter_Small_Unmarshal(b *testing.B) {
 	b.SetBytes(int64(len(smallJsonString)))
-	var v interface{}
+	var v map[string]interface{}
 	for i := 0; i < b.N; i++ {
 		jsoniter.Unmarshal([]byte(smallJsonString), &v)
 	}
@@ -212,7 +212,7 @@ func BenchmarkJSONIter_Small_Unmarshal(b *testing.B) {
 
 func BenchmarkStdJSON_Small_Unmarshal(b *testing.B) {
 	b.SetBytes(int64(len(smallJsonString)))
-	var v interface{}
+	var v map[string]interface{}
 	for i := 0; i < b.N; i++ {
 		json.Unmarshal([]byte(smallJsonString), &v)
 	}
