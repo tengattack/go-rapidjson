@@ -43,6 +43,11 @@ var unmarshalTests = []unmarshalTest{
 		map[string]interface{}{"a": uint(123), "b": "foo"},
 		[]interface{}{},
 	}},
+	{"{\"a\":[[{\"b\":123}]]}", map[string]interface{}{
+		"a": []interface{}{
+			[]interface{}{map[string]interface{}{"b": uint(123)}},
+		},
+	}},
 }
 
 func TestRapidJSON_Unmarshal(t *testing.T) {
