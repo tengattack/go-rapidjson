@@ -18,12 +18,12 @@ func main() {
 	d, _ = json.Marshal(v1)
 	fmt.Printf("val: %#v %s\n", v1, d)
 
-	s = "[-1,2,\"a\",{}]"
-	var v2 []interface{}
-	err = rapidjson.UnmarshalString(s, &v2)
+	s = "[-1,2,\"a\",{\"a\":3}]"
+	var v2 interface{}
+	err = rapidjson.UnmarshalFast([]byte(s), &v2)
 	if err != nil {
 		panic(err)
 	}
 	d, _ = json.Marshal(v2)
-	fmt.Printf("val: %#v %s\n", v2, d)
+	fmt.Printf("val: %T %#v %s\n", v2, v2, d)
 }

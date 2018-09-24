@@ -6,12 +6,16 @@
  *****************************************************************************/
 #include <iostream>
 #include <cinttypes>
+
 #include "./rapidJSON_api.h"
 #include "lib/rapidjson/include/rapidjson/reader.h"
 #include "lib/rapidjson/include/rapidjson/writer.h"
 #include "lib/rapidjson/include/rapidjson/rapidjson.h"
 #include "lib/rapidjson/include/rapidjson/filereadstream.h"
 #include "lib/rapidjson/include/rapidjson/stringbuffer.h"
+
+#include "_obj/_cgo_export.h"
+#include "lib/gotypes/types.h"
 
 /* Used to call functions in the rapidJSON namespace */
 using namespace rapidjson;
@@ -173,6 +177,287 @@ bool tm_json_r_handler::StartArray(void) {
 bool tm_json_r_handler::EndArray(size_t val) {
 	this->ctx[this->i++] = 13;
 	return true;
+}
+
+/* A collection of function pointers needed by Reader in rapidJSON */
+typedef struct json_stack {
+	int t;
+	struct __go_string *key;
+	struct __go_interface *val;
+} json_stack_t;
+
+struct __go_bmap_offset off;
+const uintptr_t dataOffset = (uintptr_t)&off.v - (uintptr_t)&off.bmap;
+
+typedef struct tm_json_r_go_handler {
+  size_t offset;
+  uint8_t *buf;
+	size_t buflen;
+	size_t depth;
+	json_stack_t stack[16];
+  tm_json_r_go_handler(uint8_t *buf_, size_t buflen_)
+    : offset(0)
+    , buf(buf_)
+		, buflen(buflen_)
+		, depth(0) {
+		struct __go_interface *p = (struct __go_interface*)(this->buf + this->offset);
+		// p->typ = NULL;
+		// p->ptr = NULL;
+		// this->offset += sizeof(struct __go_interface);  // aligned
+
+		this->stack[0] = json_stack_t{0, NULL, p};
+		this->depth++;
+	};
+  bool Default(void);
+  bool Null(void);
+  bool Bool(bool);
+  bool Int(int);
+  bool Uint(unsigned);
+  bool Int64(int64_t);
+  bool Uint64(uint64_t);
+  bool Double(double);
+  bool RawNumber(const char*,size_t,bool);
+  bool String(const char*,size_t,bool);
+  bool StartObject();
+  bool Key(const char*,size_t,bool);
+  bool EndObject(size_t);
+  bool StartArray(void);
+  bool EndArray(size_t);
+	bool TypeEnd(struct __go_interface *p);
+} tm_json_r_go_handler_t;
+
+/* Collection of callbacks that get invoked by rapidJSON when it parses */
+bool tm_json_r_go_handler::Default(void) {
+	return true;
+}
+
+bool tm_json_r_go_handler::Null(void) {
+	// interface{} -> nil
+	struct __go_interface *p = (struct __go_interface*)(this->buf + this->offset);
+	p->typ = NULL;
+	p->ptr = NULL;
+	this->offset += sizeof(struct __go_interface);  // aligned
+	return TypeEnd(p);
+}
+
+bool tm_json_r_go_handler::Bool(bool val) {
+	// interface{} -> nil
+	struct __go_interface *p = (struct __go_interface*)(this->buf + this->offset);
+	this->offset += sizeof(struct __go_interface);
+	p->typ = rtypes[kBool];
+	p->ptr = (void *)(this->buf + this->offset);
+	this->offset += sizeof(int64_t);
+	*(int64_t *)p->ptr = val ? true : false;
+	return TypeEnd(p);
+}
+
+bool tm_json_r_go_handler::Int(int val) {
+	struct __go_interface *p = (struct __go_interface*)(this->buf + this->offset);
+	this->offset += sizeof(struct __go_interface);
+	p->typ = rtypes[kInt];
+	p->ptr = (void *)(this->buf + this->offset);
+	this->offset += sizeof(int64_t);
+	*(int64_t *)p->ptr = val;
+	return TypeEnd(p);
+}
+
+bool tm_json_r_go_handler::Uint(unsigned val) {
+	struct __go_interface *p = (struct __go_interface*)(this->buf + this->offset);
+	this->offset += sizeof(struct __go_interface);
+	p->typ = rtypes[kUint];
+	p->ptr = (void *)(this->buf + this->offset);
+	this->offset += sizeof(uint64_t);
+	*(uint64_t *)p->ptr = val;
+	return TypeEnd(p);
+}
+
+bool tm_json_r_go_handler::Int64(int64_t val) {
+	struct __go_interface *p = (struct __go_interface*)(this->buf + this->offset);
+	this->offset += sizeof(struct __go_interface);
+	p->typ = rtypes[kInt64];
+	p->ptr = (void *)(this->buf + this->offset);
+	this->offset += sizeof(int64_t);
+	*(int64_t *)p->ptr = val;
+	return TypeEnd(p);
+}
+
+bool tm_json_r_go_handler::Uint64(uint64_t val) {
+	struct __go_interface *p = (struct __go_interface*)(this->buf + this->offset);
+	this->offset += sizeof(struct __go_interface);
+	p->typ = rtypes[kUint64];
+	p->ptr = (void *)(this->buf + this->offset);
+	this->offset += sizeof(uint64_t);
+	*(uint64_t *)p->ptr = val;
+	return TypeEnd(p);
+}
+
+bool tm_json_r_go_handler::Double(double val) {
+	struct __go_interface *p = (struct __go_interface*)(this->buf + this->offset);
+	this->offset += sizeof(struct __go_interface);
+	p->typ = rtypes[kFloat64];
+	p->ptr = (void *)(this->buf + this->offset);
+	this->offset += sizeof(double);
+	this->offset += 8 - (this->offset % 8);  // align
+	*(double *)p->ptr = val;
+	return TypeEnd(p);
+}
+
+bool tm_json_r_go_handler::RawNumber(const char* val,size_t len,bool set) {
+	// that should not running in here
+	return true;
+}
+
+bool tm_json_r_go_handler::String(const char* val,size_t len,bool set) {
+	struct __go_interface *p = (struct __go_interface*)(this->buf + this->offset);
+	this->offset += sizeof(struct __go_interface);
+	p->typ = rtypes[kString];
+	p->ptr = (void *)(this->buf + this->offset);
+	struct __go_string *s = (struct __go_string*)p->ptr;
+	this->offset += sizeof(struct __go_string);
+	s->__length = len;
+	s->__data = (const unsigned char*)(this->buf + this->offset);
+	this->offset += len;
+	this->offset += 8 - (this->offset % 8);  // align
+	memcpy((char *)s->__data, val, len);
+	return TypeEnd(p);
+}
+
+bool tm_json_r_go_handler::StartObject(void) {
+	struct __go_interface *p = (struct __go_interface*)(this->buf + this->offset);
+	this->offset += sizeof(struct __go_interface);
+	p->typ = rtypes[kMap];  // must be map[string]interface{}
+	p->ptr = (void *)(this->buf + this->offset);
+
+	struct __go_map_type *t = (struct __go_map_type*)p->typ;
+	struct __go_hmap *h = (struct __go_hmap*)(p->ptr);
+	this->offset += sizeof(struct __go_hmap);
+	this->offset += 8 - (this->offset % 8);  // align
+	memset(h, 0, sizeof(struct __go_hmap));  // empty
+
+	h->count = 0;
+	h->B = 0;  // 2^B = bucket count
+	h->hash0 = fastrand();
+	h->buckets = (struct __go_hmap*)(this->buf + this->offset);
+	this->offset += t->bucketsize;
+	this->offset += 8 - (this->offset % 8);  // align
+
+	struct __go_bmap *b = (struct __go_bmap*)(h->buckets);  // first
+	memset(b, 0, t->bucketsize);  // empty bucket
+
+	this->stack[this->depth++] = json_stack_t{kMap, NULL, p};
+	return true;
+}
+
+bool tm_json_r_go_handler::Key(const char* val,size_t len,bool set) {
+	struct __go_string *s = (struct __go_string*)(this->buf + this->offset);
+	this->offset += sizeof(struct __go_string);
+	s->__length = len;
+	s->__data = (const unsigned char*)(this->buf + this->offset);
+	this->offset += len;
+	this->offset += 8 - (this->offset % 8);  // align
+	memcpy((char *)s->__data, val, len);
+	this->stack[this->depth - 1].key = s;
+	return true;
+}
+
+bool tm_json_r_go_handler::EndObject(size_t val) {
+	struct __go_interface *p = this->stack[--this->depth].val;
+	return TypeEnd(p);
+}
+
+bool tm_json_r_go_handler::StartArray(void) {
+	struct __go_interface *p = (struct __go_interface*)(this->buf + this->offset);
+	this->offset += sizeof(struct __go_interface);
+	p->typ = rtypes[kSlice];
+	p->ptr = (void *)(this->buf + this->offset);
+	struct __go_slice *s = (struct __go_slice *)p->ptr;
+	this->offset += sizeof(struct __go_slice);
+	s->__values = (void *)(this->buf + this->offset);
+	s->__count = 0;
+	s->__capacity = 10;
+	this->offset += sizeof(struct __go_interface) * s->__capacity;
+	this->stack[this->depth++] = json_stack_t{kSlice, NULL, p};
+	return true;
+}
+
+bool tm_json_r_go_handler::EndArray(size_t val) {
+	struct __go_interface *p = this->stack[--this->depth].val;
+	return TypeEnd(p);
+}
+
+bool tm_json_r_go_handler::TypeEnd(struct __go_interface *p) {
+	json_stack_t *st = &this->stack[this->depth - 1];
+	switch (st->t) {
+	case kMap: {
+		struct __go_map_type *t = (struct __go_map_type*)st->val->typ;
+		struct __go_hmap *h = (struct __go_hmap*)(st->val->ptr);
+
+		uintptr_t hash = aeshash((void *)st->key->__data, h->hash0, st->key->__length);
+		uintptr_t bucket = hash & (((uintptr_t)1<<h->B) - 1);
+  	uint8_t top = (hash >> (sizeof(void *)*8 - 8)) & 0xff;
+  	if (top < minTopHash) {
+  		top += minTopHash;
+  	}
+
+		struct __go_bmap *b = (struct __go_bmap*)((uintptr_t)h->buckets + bucket*((uintptr_t)t->bucketsize));
+		int offi = h->count & (bucketCnt - 1);
+		if (h->count > bucketCnt) {
+			for (size_t i = 0; i < (h->count-1) / bucketCnt; i++) {
+				b = *(struct __go_bmap **)((uintptr_t)b + t->bucketsize - sizeof(void *));
+			}
+		}
+		if (offi == 0 && h->count != 0) {
+			// new b
+			struct __go_bmap *b2 = (struct __go_bmap*)(this->buf + this->offset);
+			offset += t->bucketsize;
+			offset += 8 - (offset % 8);
+			memset(b2, 0, t->bucketsize);  // empty bucket
+
+			*(struct __go_bmap **)((uintptr_t)b + t->bucketsize - sizeof(void *)) = b2;
+			b = b2;
+		}
+  	b->tophash[offi] = top;
+
+		memcpy((struct __go_string*)((uintptr_t)b + dataOffset + offi * t->keysize),
+			st->key, sizeof(struct __go_string));
+		memcpy((struct __go_interface*)((uintptr_t)b + dataOffset + bucketCnt * t->keysize + offi * t->valuesize),
+			p, sizeof(struct __go_interface));
+
+		h->count++;
+		break;
+	}
+	case kSlice: {
+		struct __go_slice *s = (struct __go_slice *)st->val->ptr;
+		memcpy(((struct __go_interface*)s->__values) + s->__count, p, sizeof(struct __go_interface));
+		s->__count++;
+		break;
+	}
+	default: {
+		// do not thing, since `st->val == p` must be true
+	}
+	}
+	return true;
+}
+
+/* Converts data to memory stream and feeds it to rapidJSON Parse function */
+extern "C" void* tm_json_parse_go(void* json_s, size_t len, void *buf) {
+	// allocate memory for the struct
+	tm_json_r_go_handler_t rh((uint8_t*)buf, 4096);
+
+	// create an input stream from the stringified JSON input
+	MemoryStream is((char *)json_s, len);
+
+	// create a defaults flags GenericReader object
+	Reader reader;
+
+	// call rapidJSON's Parser using the input stream and the given handler
+	bool ret = reader.Parse(is,rh);
+
+	if (ret) {
+		// length: rh.offset
+		return buf;
+	}
+	return NULL;
 }
 
 /* Creates a new Writer object and returns it to C as a void pointer */

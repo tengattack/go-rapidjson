@@ -29,6 +29,12 @@ var unmarshalTests = []unmarshalTest{
 	// object
 	{"{}", map[string]interface{}{}},
 	{"{\"a\":123}", map[string]interface{}{"a": uint(123)}},
+	{"{\"a\":1,\"b\":2,\"c\":3,\"d\":4,\"e\":5,\"f\":6,\"g\":7,\"h\":8,\"i\":9}",
+		map[string]interface{}{
+			"a": uint(1), "b": uint(2), "c": uint(3),
+			"d": uint(4), "e": uint(5), "f": uint(6),
+			"g": uint(7), "h": uint(8), "i": uint(9),
+		}},
 	{"{\"a\":{\"b\":123}}", map[string]interface{}{"a": map[string]interface{}{"b": uint(123)}}},
 	// array
 	{"[]", []interface{}{}},
@@ -56,6 +62,16 @@ func TestRapidJSON_Unmarshal(t *testing.T) {
 	var v interface{}
 	for _, test := range unmarshalTests {
 		assert.NoError(Unmarshal([]byte(test.json), &v))
+		assert.Equal(test.val, v)
+	}
+}
+
+func TestRapidJSON_UnmarshalFast(t *testing.T) {
+	assert := assert.New(t)
+
+	var v interface{}
+	for _, test := range unmarshalTests {
+		assert.NoError(UnmarshalFast([]byte(test.json), &v))
 		assert.Equal(test.val, v)
 	}
 }
@@ -172,6 +188,14 @@ func BenchmarkRapidJSON_Large_Unmarshal(b *testing.B) {
 	}
 }
 
+func BenchmarkRapidJSON_Large_UnmarshalFast(b *testing.B) {
+	b.SetBytes(int64(len(largeJsonString)))
+	var v interface{}
+	for i := 0; i < b.N; i++ {
+		UnmarshalFast([]byte(largeJsonString), &v)
+	}
+}
+
 func BenchmarkJSONIter_Large_Unmarshal(b *testing.B) {
 	b.SetBytes(int64(len(largeJsonString)))
 	var v []interface{}
@@ -205,6 +229,14 @@ func BenchmarkRapidJSON_Small_Unmarshal(b *testing.B) {
 	var v map[string]interface{}
 	for i := 0; i < b.N; i++ {
 		Unmarshal([]byte(smallJsonString), &v)
+	}
+}
+
+func BenchmarkRapidJSON_Small_UnmarshalFast(b *testing.B) {
+	b.SetBytes(int64(len(smallJsonString)))
+	var v interface{}
+	for i := 0; i < b.N; i++ {
+		UnmarshalFast([]byte(smallJsonString), &v)
 	}
 }
 

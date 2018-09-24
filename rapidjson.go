@@ -1,8 +1,9 @@
 package rapidjson
 
-// #cgo CFLAGS: -I${SRCDIR}/rapidjson-wrapper
+// #cgo CFLAGS: -I. -I${SRCDIR}/rapidjson-wrapper
 // #cgo LDFLAGS: -L${SRCDIR}/rapidjson-wrapper -lrapidJSON_api -lstdc++
 // #include "rapidJSON_api.h"
+// #include "lib/gotypes/types.h"
 import "C"
 import (
 	"encoding/binary"
@@ -22,7 +23,7 @@ type bufPool struct {
 	pool *sync.Pool
 }
 
-const bufSize = 4096
+const bufSize = 40960
 
 // ErrBad invalid JSON data
 var ErrBad = errors.New("Invalid JSON")
@@ -38,7 +39,7 @@ func (p *bufPool) Get(len int) ([]byte, bool) {
 	// buffer memory ratio: (2+5n)/(1+2n) > 2.5
 	// so, 4096 / 2.5 = 1638.4
 	if len > 1638 {
-		return make([]byte, len*3), false
+		return make([]byte, len*30), false
 	}
 	return p.pool.Get().([]byte), true
 }
@@ -188,5 +189,19 @@ func convertValue(buf []byte, ret int, v interface{}) error {
 			return nil
 		}
 	}
+	return nil
+}
+
+// UnmarshalFast unmarshals data to JSON value
+func UnmarshalFast(data []byte, v interface{}) error {
+	buf, ok := bufs.Get(len(data))
+	if ok {
+		defer bufs.Put(buf)
+	}
+	ret := (*interface{})(C.tm_json_parse_go(unsafe.Pointer(&data[0]), C.size_t((len(data))), unsafe.Pointer(&buf[0])))
+	if ret == nil {
+		return ErrBad
+	}
+	*(v.(*interface{})) = *ret
 	return nil
 }
