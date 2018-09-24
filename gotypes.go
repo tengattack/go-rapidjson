@@ -3,6 +3,7 @@ package rapidjson
 // #cgo CFLAGS: -I. -I${SRCDIR}/rapidjson-wrapper
 // #cgo LDFLAGS: -L${SRCDIR}/rapidjson-wrapper -lrapidJSON_api -lstdc++
 /*
+#include "lib/gotypes/hash.h"
 #include "lib/gotypes/types.h"
 */
 import "C"
@@ -12,41 +13,30 @@ import (
 	forceexport "github.com/alangpierce/go-forceexport"
 )
 
-var memhash_ func(p unsafe.Pointer, seed, s uintptr) uintptr
-var aeshash_ func(p unsafe.Pointer, seed, s uintptr) uintptr
-var fastrand_ func() uint32
+var memhash_ uintptr
+var aeshash_ uintptr
+var fastrand_ uintptr
 
 func alginit() {
-	err := forceexport.GetFunc(&memhash_, "runtime.memhash")
+	var err error
+	memhash_, err = forceexport.FindFuncWithName("runtime.memhash")
 	if err != nil {
 		// Handle errors if you care about name possibly being invalid.
 		panic(err)
 	}
-	err = forceexport.GetFunc(&aeshash_, "runtime.aeshash")
+	aeshash_, err = forceexport.FindFuncWithName("runtime.aeshash")
 	if err != nil {
 		// Handle errors if you care about name possibly being invalid.
 		panic(err)
 	}
-	err = forceexport.GetFunc(&fastrand_, "runtime.fastrand")
+	fastrand_, err = forceexport.FindFuncWithName("runtime.fastrand")
 	if err != nil {
 		// Handle errors if you care about name possibly being invalid.
 		panic(err)
 	}
-}
-
-//export memhash
-func memhash(p unsafe.Pointer, seed, s C.uintptr_t) C.uintptr_t {
-	return C.uintptr_t(memhash_(p, uintptr(seed), uintptr(s)))
-}
-
-//export aeshash
-func aeshash(p unsafe.Pointer, seed, s C.uintptr_t) C.uintptr_t {
-	return C.uintptr_t(aeshash_(p, uintptr(seed), uintptr(s)))
-}
-
-//export fastrand
-func fastrand() C.uint32_t {
-	return C.uint32_t(fastrand_())
+	C.setHashFunc(unsafe.Pointer(memhash_),
+		unsafe.Pointer(aeshash_),
+		unsafe.Pointer(fastrand_))
 }
 
 func init() {

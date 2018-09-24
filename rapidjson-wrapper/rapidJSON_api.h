@@ -28,7 +28,7 @@ typedef struct tm_json_w_handler {
 /* Reading prototypes */
 int tm_json_parse(void *,size_t,void *);
 int tm_json_parse_str(char *,void *);
-void* tm_json_parse_go(void *,size_t,void *);
+void* tm_json_parse_go(void *,size_t,void *,size_t);
 
 /* Writing prototypes */
 tm_json_w_handler_t tm_json_write_create();

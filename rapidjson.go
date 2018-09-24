@@ -23,7 +23,7 @@ type bufPool struct {
 	pool *sync.Pool
 }
 
-const bufSize = 40960
+const bufSize = 4096
 
 // ErrBad invalid JSON data
 var ErrBad = errors.New("Invalid JSON")
@@ -39,7 +39,7 @@ func (p *bufPool) Get(len int) ([]byte, bool) {
 	// buffer memory ratio: (2+5n)/(1+2n) > 2.5
 	// so, 4096 / 2.5 = 1638.4
 	if len > 1638 {
-		return make([]byte, len*30), false
+		return make([]byte, len*3), false
 	}
 	return p.pool.Get().([]byte), true
 }
@@ -198,10 +198,47 @@ func UnmarshalFast(data []byte, v interface{}) error {
 	if ok {
 		defer bufs.Put(buf)
 	}
-	ret := (*interface{})(C.tm_json_parse_go(unsafe.Pointer(&data[0]), C.size_t((len(data))), unsafe.Pointer(&buf[0])))
+	ret := C.tm_json_parse_go(unsafe.Pointer(&data[0]), C.size_t((len(data))), unsafe.Pointer(&buf[0]), C.size_t(len(buf)))
 	if ret == nil {
 		return ErrBad
 	}
-	*(v.(*interface{})) = *ret
+
+	*(v.(*interface{})) = *(*interface{})(ret)
 	return nil
+}
+
+func deepCopy(v interface{}) interface{} {
+	switch m := v.(type) {
+	case map[string]interface{}:
+		r := make(map[string]interface{}, len(m))
+		for k, v := range m {
+			r[k] = deepCopy(v)
+		}
+		return r
+	case []interface{}:
+		r := make([]interface{}, len(m))
+		for i, v := range m {
+			r[i] = deepCopy(v)
+		}
+		return r
+	case nil:
+		return nil
+	case bool:
+		return m
+	case int:
+		return m
+	case uint:
+		return m
+	case int64:
+		return m
+	case uint64:
+		return m
+	case float32:
+		return m
+	case float64:
+		return m
+	case string:
+		return m
+	}
+	return v
 }

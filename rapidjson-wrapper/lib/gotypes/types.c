@@ -6,7 +6,7 @@
 #include <inttypes.h>
 #include <string.h>
 
-#include "_obj/_cgo_export.h"
+#include "hash.h"
 #include "types.h"
 
 struct __go_rtype *rtypes[kCount] = {0};
@@ -210,7 +210,7 @@ void* getMapInterface() {
 
 	h->count = 0;
 	h->B = 0;  // 2^B = bucket count
-	h->hash0 = fastrand();
+	h->hash0 = 0;  // fastrand();
 	h->buckets = (struct __go_hmap*)((uintptr_t)in + offset);
 	offset += t->bucketsize;
 	offset += in->typ->align - (offset % in->typ->align);
