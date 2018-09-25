@@ -7,8 +7,6 @@
 #include <iostream>
 #include <cinttypes>
 
-#include <gperftools/tcmalloc.h>
-
 #include "./rapidJSON_api.h"
 #include "lib/rapidjson/include/rapidjson/reader.h"
 #include "lib/rapidjson/include/rapidjson/writer.h"
